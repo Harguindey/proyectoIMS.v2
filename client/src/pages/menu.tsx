@@ -375,7 +375,13 @@ function UserProfileSection({ isLoading, isAuthenticated, user, isMobile }: {
           </div>
           
           <Button
-            onClick={() => window.location.href = '/api/logout'}
+            onClick={async () => {
+              await fetch("/api/auth/logout", {
+                method: "POST",
+                credentials: "include",
+              });
+              window.location.href = "/";
+            }}
             variant="outline"
             size={isMobile ? "default" : "sm"}
             className="w-full text-slate-600 hover:text-slate-900"

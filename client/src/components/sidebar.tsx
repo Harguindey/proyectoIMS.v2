@@ -407,7 +407,7 @@ function UserProfile() {
             credentials: "include",
           });
 
-          window.location.href = "/login";
+          window.location.href = "/";
         }}
         variant="ghost"
         size="sm"
