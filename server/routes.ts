@@ -3194,7 +3194,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const exportService = new ExportService();
 
   // Export data in various formats
-  app.post("/api/export", isAuthenticated, hasPermission('reports', 'read'), async (req, res) => {
+  app.post("/api/export", isAuthenticated, async (req, res) => {
     try {
       const orgId = getOrganizationId(req, res);
       if (!orgId) return;
@@ -3239,7 +3239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get export preview/metadata
-  app.post("/api/export/preview", isAuthenticated, hasPermission('reports', 'read'), async (req, res) => {
+  app.post("/api/export/preview", isAuthenticated, async (req, res) => {
     try {
       const orgId = getOrganizationId(req, res);
       if (!orgId) return;
@@ -3323,7 +3323,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Import Routes - File Import Management
   
   // Preview file before importing
-  app.post("/api/import/preview", isAuthenticated, hasPermission('inventory', 'write'), upload.single('file'), async (req, res) => {
+  app.post("/api/import/preview", isAuthenticated, upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No se proporcionó archivo" });
@@ -3376,7 +3376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Execute actual import
-  app.post("/api/import/execute", isAuthenticated, hasPermission('inventory', 'write'), upload.single('file'), async (req, res) => {
+  app.post("/api/import/execute", isAuthenticated, upload.single('file'), async (req, res) => {
     try {
       const orgId = getOrganizationId(req, res);
       if (!orgId) return;
@@ -3512,7 +3512,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Download import templates (Excel format)
-  app.get("/api/import/template/:type", isAuthenticated, hasPermission('inventory', 'read'), async (req, res) => {
+  app.get("/api/import/template/:type", isAuthenticated, async (req, res) => {
     try {
       const { type } = req.params;
       if (!type || !['products', 'customers', 'suppliers', 'zones', 'movements', 'inventory'].includes(type)) {
