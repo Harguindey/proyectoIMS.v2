@@ -66,21 +66,20 @@ const openai = process.env.OPENAI_API_KEY ? new OpenAI({
 
 // Local semantic expansion dictionary for common search terms
 const semanticExpansions: Record<string, string[]> = {
-  'clientes': ['cliente', 'clientes', 'club', 'clubs', 'gimnasio', 'gimnasios', 'escuela', 'escuelas', 'deportivo', 'deportiva', 'asociación', 'empresa', 'centro'],
-  'cliente': ['cliente', 'clientes', 'club', 'clubs', 'gimnasio', 'gimnasios', 'escuela', 'escuelas', 'deportivo', 'deportiva'],
-  'productos': ['producto', 'productos', 'artículo', 'artículos', 'material', 'equipo', 'equipamiento'],
-  'producto': ['producto', 'productos', 'artículo', 'artículos', 'material', 'equipo'],
-  'balones': ['balón', 'balones', 'pelota', 'pelotas', 'ball', 'fútbol', 'baloncesto', 'balonmano'],
-  'balón': ['balón', 'balones', 'pelota', 'pelotas', 'ball', 'fútbol'],
-  'deporte': ['deporte', 'deportes', 'deportivo', 'deportiva', 'sport', 'athletic', 'atlético'],
-  'deportes': ['deporte', 'deportes', 'deportivo', 'deportiva', 'sport', 'athletic'],
-  'proveedores': ['proveedor', 'proveedores', 'supplier', 'fabricante', 'distribuidor', 'marca', 'empresa'],
+  'clientes': ['cliente', 'clientes', 'empresa', 'empresas', 'comprador', 'compradores', 'cuenta', 'cuentas', 'destinatario'],
+  'cliente': ['cliente', 'clientes', 'empresa', 'comprador', 'cuenta', 'destinatario'],
+  'productos': ['producto', 'productos', 'artículo', 'artículos', 'material', 'referencia', 'referencias', 'sku', 'item', 'items'],
+  'producto': ['producto', 'productos', 'artículo', 'artículos', 'material', 'referencia', 'sku', 'item'],
+  'proveedores': ['proveedor', 'proveedores', 'supplier', 'fabricante', 'distribuidor', 'suministrador'],
   'proveedor': ['proveedor', 'proveedores', 'supplier', 'fabricante', 'distribuidor'],
-  'zapatos': ['zapato', 'zapatos', 'zapatilla', 'zapatillas', 'calzado', 'footwear', 'shoes'],
-  'zapatillas': ['zapatilla', 'zapatillas', 'zapato', 'zapatos', 'calzado', 'running', 'deportivas'],
-  'ropa': ['ropa', 'camiseta', 'camisetas', 'pantalón', 'pantalones', 'vestimenta', 'indumentaria', 'textil'],
-  'equipamiento': ['equipamiento', 'equipo', 'material', 'accesorio', 'accesorios', 'implemento'],
-  'stock': ['stock', 'inventario', 'existencias', 'almacén', 'bodega', 'disponible'],
+  'stock': ['stock', 'inventario', 'existencias', 'almacén', 'disponible', 'unidades'],
+  'inventario': ['inventario', 'stock', 'existencias', 'almacén', 'disponible'],
+  'almacen': ['almacén', 'almacen', 'bodega', 'depósito', 'zona', 'ubicación'],
+  'zona': ['zona', 'zonas', 'ubicación', 'ubicaciones', 'estantería', 'pasillo', 'almacén'],
+  'movimientos': ['movimiento', 'movimientos', 'entrada', 'salida', 'transferencia', 'ajuste'],
+  'compras': ['compra', 'compras', 'aprovisionamiento', 'procurement', 'reposición'],
+  'devoluciones': ['devolución', 'devoluciones', 'devolucion', 'return', 'retorno', 'reembolso'],
+  'envio': ['envío', 'envio', 'envíos', 'entrega', 'expedición', 'transporte', 'tracking', 'paquete'],
   'pedido': ['pedido', 'pedidos', 'orden', 'ordenes', 'compra', 'venta'],
   'pedidos': ['pedido', 'pedidos', 'orden', 'ordenes', 'compra', 'venta', 'envío']
 };
@@ -104,14 +103,14 @@ async function expandSearchQuery(query: string): Promise<string[]> {
         messages: [
           {
             role: "system",
-            content: `Eres un asistente que ayuda a expandir consultas de búsqueda en un sistema de gestión de inventario deportivo. 
+            content: `Eres un asistente que ayuda a expandir consultas de búsqueda en un sistema de gestión de inventario y logística.
             Dado un término de búsqueda, proporciona palabras relacionadas y sinónimos relevantes en español.
             Responde SOLO con una lista de términos separados por comas, sin explicaciones adicionales.
             Incluye el término original y sus variaciones.`
           },
           {
             role: "user",
-            content: `Término de búsqueda: "${query}". Proporciona términos relacionados para buscar en: productos deportivos, clientes (empresas, gimnasios, clubs), proveedores, pedidos, zonas de almacén, y movimientos de stock.`
+            content: `Término de búsqueda: "${query}". Proporciona términos relacionados para buscar en: productos (referencias, SKU), clientes (empresas y compradores), proveedores, pedidos, zonas de almacén, y movimientos de stock.`
           }
         ],
         temperature: 0.3,
@@ -247,8 +246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createUserRole({
           userId: user.id,
           roleId: adminRole.id,
-          organizationId: org.id,
-          assignedBy: "system",
+          assignedBy: user.id,
         } as any);
       }
 
@@ -3697,10 +3695,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: unknown) {
       console.error("[Sales] Error creating sale:", error);
       
-      // Manejar error de stock insuficiente
-      if (error instanceof Error && error.message.includes('stock insuficiente')) {
-        return res.status(409).json({ 
-          message: error.message
+      // Manejar error de stock insuficiente (insensible a mayúsculas y a envoltorios de error)
+      const errMsg = error instanceof Error ? `${error.message} ${(error as any).cause?.message ?? ""}` : "";
+      if (errMsg.toLowerCase().includes('stock insuficiente')) {
+        return res.status(409).json({
+          message: error instanceof Error ? error.message : "Stock insuficiente",
         });
       }
       

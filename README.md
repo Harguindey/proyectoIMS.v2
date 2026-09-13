@@ -1,257 +1,133 @@
-# SportMax Pro - Sistema de Gestión de Inventario
+# LogiPro
 
-Sistema completo de gestión de inventario para empresas deportivas desarrollado con React, Express.js y PostgreSQL.
+SaaS multi-tenant de gestión de inventario, almacén y operaciones para pymes. Combina control de stock, gestión de almacén (SGA), módulos de ERP, punto de venta (TPV), aprovisionamiento, envíos y facturación electrónica española en una sola aplicación.
 
-## 📋 Descripción
+> **Estado del proyecto:** MVP en desarrollo activo. La base (multi-tenancy, RBAC, esquema de datos) es sólida; la cobertura de tests y el pulido de algunas integraciones siguen en curso. No usar en producción con datos reales sin una revisión de seguridad previa.
 
-SportMax Pro es una aplicación web completa para la gestión de inventario de productos deportivos que incluye:
+## Qué hace
 
-- 📦 **Gestión de Productos**: CRUD completo con categorías, proveedores y zonas de almacén
-- 🏢 **Gestión de Clientes**: Base de datos de clientes con historial de pedidos
-- 📋 **Gestión de Pedidos**: Creación, seguimiento y conversión de reservas a pedidos
-- 🚚 **Sistema de Envíos**: Integración con 12+ agencias de transporte españolas
-- 📊 **Analytics Avanzados**: Dashboards interactivos con métricas en tiempo real
-- 📄 **Generación de PDFs**: Hojas de preparación simplificadas para almacén
-- 🔍 **Búsqueda Inteligente**: Sistema de filtrado por múltiples criterios
-- 📱 **Diseño Responsive**: Interfaz optimizada para móviles y tablets
+LogiPro está organizado por módulos. Cada dato pertenece a una **organización** (tenant), y el acceso se controla por roles y permisos.
 
-## 🚀 Tecnologías
+- **Inventario** — CRUD de productos con SKU autogenerado, categorías, stock mínimo/máximo, punto de reorden y stock de seguridad.
+- **Almacén (SGA)** — zonas con capacidad y ocupación, mapa de almacén, movimientos de stock (entrada / salida / transferencia).
+- **Pedidos y clientes** — clientes con direcciones, pedidos con estados (pendiente → preparando → enviado → entregado), reservas de producto y hojas de preparación en PDF.
+- **TPV / Punto de venta** — ventas en tienda con descuento de stock en tiempo real y modelo de fulfillment híbrido (stock propio + dropshipping).
+- **Aprovisionamiento** — proveedores con lead times, planes de compra y reposición.
+- **Envíos** — agencias de transporte, tarifas por zona/peso, tracking de envíos y devoluciones.
+- **ERP** — contabilidad, CRM, RRHH, facturas, compras y **cumplimiento fiscal español (SII / Verifactu)**.
+- **Analítica** — dashboard, clasificación ABC, análisis de velocidad de venta y puntos de reorden dinámicos.
+- **Administración** — organizaciones, usuarios, invitaciones por email, roles y permisos, emails autorizados, facturación con Stripe.
 
-### Frontend
-- **React 18** con TypeScript
-- **Vite** para desarrollo y build
-- **Tailwind CSS** + **shadcn/ui** para estilos
-- **TanStack Query** para manejo de estado del servidor
-- **Wouter** para enrutado
-- **Recharts** para visualización de datos
-- **jsPDF** para generación de documentos
+## Stack
 
-### Backend
-- **Express.js** con TypeScript
-- **Drizzle ORM** para base de datos
-- **PostgreSQL** como base de datos principal
-- **Replit Auth** para autenticación
-- **Express Session** con almacenamiento en PostgreSQL
+**Frontend:** React 18 + TypeScript, Vite, Wouter (routing), TanStack Query (estado de servidor), Tailwind CSS + shadcn/ui (Radix), Recharts (gráficas), jsPDF (documentos).
 
-### Herramientas de Desarrollo
-- **TypeScript** para type safety
-- **ESLint** para linting
-- **Prettier** para formateo de código
+**Backend:** Express + TypeScript, Drizzle ORM sobre PostgreSQL, validación con Zod (drizzle-zod), sesiones en PostgreSQL (`connect-pg-simple`).
 
-## 📦 Instalación
+**Autenticación:** email/contraseña (Passport local, bcrypt), OAuth opcional con Google y Microsoft, y OIDC de Replit opcional (`USE_REPLIT_AUTH`). Verificación de email y reset de contraseña incluidos.
 
-### Requisitos Previos
-- Node.js 18 o superior
-- PostgreSQL 14 o superior
-- npm o yarn
+**Integraciones:** Stripe (suscripciones), Resend (email transaccional), OpenAI (expansión de búsqueda, opcional).
 
-### Configuración Local
+**Seguridad de base:** Helmet, rate limiting diferenciado (login vs API general), bcrypt (cost 12), guards de aislamiento multi-tenant.
 
-1. **Clonar el repositorio**
+## Estructura
+
+```
+LogiPro/
+├── client/          # Frontend React (Vite)
+│   └── src/
+│       ├── components/   # Componentes y modales
+│       ├── pages/        # Páginas (dashboard, inventario, erp/, sga/, admin/…)
+│       ├── hooks/        # Custom hooks
+│       └── lib/          # Utilidades y cliente de queries
+├── server/          # Backend Express
+│   ├── index.ts          # Arranque, middleware, seguridad
+│   ├── routes.ts         # Rutas principales de la API
+│   ├── erp-routes.ts     # Rutas del módulo ERP
+│   ├── sga-routes.ts     # Rutas del módulo de almacén
+│   ├── storage.ts        # Capa de acceso a datos
+│   ├── replitAuth.ts     # Setup de auth (local + OAuth + OIDC)
+│   ├── init-security.ts  # Seed de roles, permisos y admin
+│   ├── multi-tenant-guards.ts  # Validación de aislamiento por organización
+│   └── services/         # email, stripe, export, import, IA, analítica, SII
+├── shared/          # Código compartido cliente/servidor
+│   ├── schema.ts         # Esquema Drizzle principal (multi-tenant)
+│   ├── erp-schema.ts     # Esquema del ERP
+│   └── sga-schema.ts     # Esquema del almacén
+├── drizzle.config.ts
+├── docker-compose.yml
+└── Dockerfile
+```
+
+> **Nota de limpieza:** el repo aún arrastra restos de migraciones anteriores (`backend/` en Python, `frontend/`, `.emergent/`, capturas `.png` en la raíz, páginas duplicadas como `dashboard-old.tsx` / `products-new.tsx`). No forman parte de la app en ejecución y están pendientes de eliminar.
+
+## Puesta en marcha (local)
+
+**Requisitos:** Node.js 20+, PostgreSQL 14+.
+
+1. Instalar dependencias:
+
+   ```bash
+   npm install
+   ```
+
+2. Configurar variables de entorno:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Editar `.env`. Las mínimas para arrancar en desarrollo son `DATABASE_URL`, `SESSION_SECRET`, `PORT` y `NODE_ENV`. El resto (Resend, Stripe, OAuth) habilitan módulos concretos y son opcionales en local.
+
+3. Aplicar el esquema a la base de datos:
+
+   ```bash
+   npm run db:push
+   ```
+
+4. Arrancar en desarrollo:
+
+   ```bash
+   npm run dev
+   ```
+
+   La app queda en `http://localhost:5000` (API + cliente servidos juntos).
+
+## Scripts
+
 ```bash
-git clone [URL_DEL_REPOSITORIO]
-cd sportmax-pro
+npm run dev        # Servidor de desarrollo (tsx)
+npm run build      # Build de cliente (Vite) + servidor (esbuild)
+npm run start      # Servidor de producción (dist/index.js)
+npm run check      # Comprobación de tipos (tsc)
+npm run db:push    # Aplica el esquema Drizzle a la BD
 ```
 
-2. **Instalar dependencias**
-```bash
-npm install
-```
+## Variables de entorno
 
-3. **Configurar variables de entorno**
-```bash
-cp .env.example .env
-```
+Ver `.env.example` para la lista completa y comentada. Resumen:
 
-Editar `.env` con tus configuraciones:
-```env
-DATABASE_URL=postgresql://usuario:contraseña@localhost:5432/sportmax_pro
-SESSION_SECRET=tu_clave_secreta_muy_segura
-NODE_ENV=development
-```
+| Variable | Para qué | ¿Obligatoria? |
+|---|---|---|
+| `DATABASE_URL` | Conexión PostgreSQL | Sí |
+| `SESSION_SECRET` | Firma de sesiones (≥32 chars en prod) | Sí |
+| `PORT` / `NODE_ENV` | Servidor | Sí |
+| `RESEND_API_KEY` / `FROM_EMAIL` / `APP_URL` | Email transaccional | Para emails |
+| `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` / `VITE_STRIPE_PUBLIC_KEY` | Facturación | Para billing |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Login con Google | Para OAuth Google |
+| `MICROSOFT_CLIENT_ID` / `MICROSOFT_CLIENT_SECRET` | Login con Microsoft | Para OAuth Microsoft |
+| `OPENAI_API_KEY` | Expansión de búsqueda con IA | Opcional |
 
-4. **Configurar base de datos**
-```bash
-# Crear la base de datos
-createdb sportmax_pro
+## Despliegue
 
-# Ejecutar migraciones
-npm run db:push
-```
-
-5. **Iniciar el servidor de desarrollo**
-```bash
-npm run dev
-```
-
-La aplicación estará disponible en `http://localhost:5000`
-
-## 🔧 Comandos Disponibles
+Incluye `Dockerfile` (multi-stage, usuario no-root, healthcheck en `/api/health`) y `docker-compose.yml` (app + PostgreSQL). Con las variables de entorno configuradas:
 
 ```bash
-# Desarrollo
-npm run dev          # Inicia servidor de desarrollo
-npm run build        # Construye para producción
-npm run start        # Inicia servidor de producción
-
-# Base de datos
-npm run db:push      # Aplica cambios del schema a la BD
-npm run db:generate  # Genera migraciones
-npm run db:studio    # Abre Drizzle Studio
-
-# Calidad de código
-npm run lint         # Ejecuta ESLint
-npm run type-check   # Verifica tipos TypeScript
+docker compose up --build
 ```
 
-## 🗃️ Estructura del Proyecto
+Ver `DEPLOYMENT.md` para el detalle. La arquitectura y las decisiones técnicas están en `replit.md` (pendiente de renombrar a `ARCHITECTURE.md`).
 
-```
-sportmax-pro/
-├── client/                 # Frontend React
-│   ├── src/
-│   │   ├── components/     # Componentes reutilizables
-│   │   ├── pages/         # Páginas de la aplicación
-│   │   ├── hooks/         # Custom hooks
-│   │   ├── lib/           # Utilidades y configuración
-│   │   └── index.tsx      # Punto de entrada
-│   └── public/            # Archivos estáticos
-├── server/                # Backend Express
-│   ├── db.ts             # Configuración de base de datos
-│   ├── routes.ts         # Rutas de la API
-│   ├── storage.ts        # Capa de datos
-│   └── index.ts          # Servidor principal
-├── shared/               # Código compartido
-│   └── schema.ts         # Esquemas de base de datos
-└── README.md
-```
+## Licencia
 
-## 🔐 Configuración de Autenticación
-
-El sistema utiliza Replit Auth para autenticación. Para configurar en otro entorno:
-
-1. **Configurar variables de entorno**:
-```env
-REPL_ID=tu_repl_id
-ISSUER_URL=https://replit.com/oidc
-REPLIT_DOMAINS=tu-dominio.com
-SESSION_SECRET=clave_secreta_larga_y_segura
-```
-
-2. **Configurar usuarios autorizados** (opcional):
-Editar `server/storage.ts` para incluir lista de emails autorizados.
-
-## 🚀 Despliegue
-
-### Vercel (Recomendado)
-
-1. **Conectar repositorio a Vercel**
-2. **Configurar variables de entorno** en el dashboard de Vercel
-3. **Configurar PostgreSQL** (recomendado: Neon, Supabase)
-4. **Deploy automático** desde main branch
-
-### Railway
-
-1. **Conectar repositorio GitHub a Railway**
-2. **Agregar PostgreSQL addon**
-3. **Configurar variables de entorno**
-4. **Deploy automático**
-
-### Render
-
-1. **Crear nuevo Web Service**
-2. **Conectar repositorio**
-3. **Configurar PostgreSQL**
-4. **Configurar variables de entorno**
-
-## 📊 Funcionalidades Principales
-
-### Gestión de Inventario
-- ✅ CRUD de productos con categorías
-- ✅ Control de stock mínimo/máximo
-- ✅ Asignación a zonas de almacén
-- ✅ Movimientos de stock (entrada/salida/transferencia)
-- ✅ Alertas de stock bajo
-
-### Gestión de Pedidos
-- ✅ Creación de pedidos con múltiples productos
-- ✅ Sistema de estados (pendiente, preparando, enviado, entregado)
-- ✅ Conversión de reservas a pedidos
-- ✅ Generación de hojas de preparación en PDF
-
-### Sistema de Envíos
-- ✅ Integración con 12+ transportistas españolas
-- ✅ Cálculo automático de costes de envío
-- ✅ Seguimiento de envíos con estados
-- ✅ Zonas de envío configurables
-
-### Analytics y Reportes
-- ✅ Dashboard con métricas en tiempo real
-- ✅ Gráficos interactivos de ventas y tendencias
-- ✅ Análisis de rendimiento por zonas
-- ✅ Productos más vendidos
-- ✅ Temas de colores personalizables
-
-## 🔧 Configuración Avanzada
-
-### Personalización de Colores
-El sistema incluye 8 temas de colores predefinidos:
-- Default, Ocean, Sunset, Forest
-- Monochrome, Vibrant, Pastel, Corporate
-
-### Configuración de Zonas de Almacén
-Las zonas se configuran por deporte:
-- Fútbol, Baloncesto, Tenis, Natación
-- Fitness, Running, Ciclismo, Deportes de Invierno
-
-### Proveedores Configurados
-- Nike España, Adidas Iberia, Puma España
-- Decathlon Pro, Spalding Iberia, Wilson España
-
-## 🐛 Troubleshooting
-
-### Error de Conexión a Base de Datos
-```bash
-# Verificar que PostgreSQL está corriendo
-pg_ctl status
-
-# Verificar conexión
-psql $DATABASE_URL
-```
-
-### Error de Compilación TypeScript
-```bash
-# Limpiar cache y reinstalar
-rm -rf node_modules package-lock.json
-npm install
-```
-
-### Problemas de Autenticación
-- Verificar variables de entorno `REPL_ID` y `SESSION_SECRET`
-- Comprobar que `REPLIT_DOMAINS` coincide con tu dominio
-
-## 📝 Changelog
-
-Ver [replit.md](./replit.md) para un historial completo de cambios.
-
-## 🤝 Contribución
-
-1. Fork el proyecto
-2. Crear feature branch (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit cambios (`git commit -m 'Agregar nueva funcionalidad'`)
-4. Push al branch (`git push origin feature/nueva-funcionalidad`)
-5. Abrir Pull Request
-
-## 📄 Licencia
-
-Este proyecto es de uso privado. Todos los derechos reservados.
-
-## 📞 Soporte
-
-Para soporte técnico o consultas:
-- Crear issue en GitHub
-- Contactar al administrador del sistema
-
----
-
-**SportMax Pro** - Sistema de gestión de inventario profesional para empresas deportivas.
+Proyecto privado. Todos los derechos reservados.

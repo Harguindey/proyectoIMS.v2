@@ -41,7 +41,7 @@ import Sidebar from "@/components/sidebar";
 import { Header } from "@/components/Header";
 import OnboardingTour from "@/components/onboarding-tour";
 import { AdminOnly } from "@/components/protected-component";
-import { useOnboarding } from "@/hooks/use-onboarding";
+import { OnboardingProvider, useOnboarding } from "@/hooks/use-onboarding";
 import { DeviceProvider } from "@/hooks/use-device-detection";
 import LoginPage from "@/pages/login";
 import SignupPage from "@/pages/signup";
@@ -179,13 +179,42 @@ function OnboardingGate() {
     retry: false,
   });
 
+  const { maybeAutoStart } = useOnboarding();
+
+  const wizardDone = onboardingStatus?.completed === true;
   const showWizard = isLoggedIn && !isPublic && onboardingStatus?.completed === false;
+
+  // El tour guiado se muestra una sola vez: tras iniciar sesión, en una página
+  // privada y cuando el asistente de configuración ya está completado.
+  // maybeAutoStart solo abre el tour si nunca se ha visto (ver useOnboarding).
+  useEffect(() => {
+    if (isLoggedIn && !isPublic && wizardDone) {
+      const t = setTimeout(() => maybeAutoStart(), 800);
+      return () => clearTimeout(t);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoggedIn, isPublic, wizardDone]);
 
   return (
     <OnboardingWizard
       open={showWizard}
       initialOrgName={onboardingStatus?.orgName ?? ""}
       onComplete={() => refetch()}
+    />
+  );
+}
+
+/** Renderiza el tour una única vez, controlado por el contexto de onboarding. */
+function TourHost() {
+  const { showTour, closeTour } = useOnboarding();
+  return (
+    <OnboardingTour
+      open={showTour}
+      onOpenChange={(open) => {
+        // Cerrar por cualquier vía (X, "saltar" o "finalizar") lo marca como visto.
+        if (!open) closeTour();
+      }}
+      onComplete={closeTour}
     />
   );
 }
@@ -209,23 +238,19 @@ function ProductTheme() {
 }
 
 function App() {
-  const { showTour, setShowTour, completeOnboarding } = useOnboarding();
-
   return (
     <QueryClientProvider client={queryClient}>
       <DeviceProvider>
         <TooltipProvider>
-          <ProductTheme />
-          <Toaster />
-          <AuthGate>
-            <Router />
-          </AuthGate>
-          <OnboardingGate />
-          <OnboardingTour
-            open={showTour}
-            onOpenChange={setShowTour}
-            onComplete={completeOnboarding}
-          />
+          <OnboardingProvider>
+            <ProductTheme />
+            <Toaster />
+            <AuthGate>
+              <Router />
+            </AuthGate>
+            <OnboardingGate />
+            <TourHost />
+          </OnboardingProvider>
         </TooltipProvider>
       </DeviceProvider>
     </QueryClientProvider>

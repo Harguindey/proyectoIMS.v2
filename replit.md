@@ -1,59 +1,71 @@
-# TireMax Pro - Sistema de Gestión de Inventario
+# LogiPro — Contexto y Arquitectura
+
+> Este archivo describe la arquitectura y las convenciones del proyecto. Nació como memoria del agente de Replit; se puede renombrar a `ARCHITECTURE.md` con `git mv replit.md ARCHITECTURE.md` (solo lo enlaza el README, ninguna parte del código depende de él).
 
 ## Overview
-TireMax Pro es un sistema completo de gestión de inventario especializado en la importación y distribución de llantas custom para automóviles desde China. El sistema optimiza el control de inventario, gestión de almacén, aprovisionamiento internacional, procesamiento de pedidos, reservas de productos y análisis logístico. Está diseñado para importadores de llantas personalizadas con múltiples variantes de productos y gestión de proveedores internacionales con largos tiempos de entrega.
 
-El modelo de negocio se centra en la importación directa desde fabricantes chinos, ofreciendo llantas de aleación deportiva con diseños exclusivos y acabados premium, distribuidas en cinco categorías principales. El sistema soporta un catálogo de 810 productos activos con múltiples combinaciones de estilo, medida y acabado.
+LogiPro es un SaaS **multi-tenant** de gestión de inventario, almacén y operaciones para pymes. Un mismo despliegue sirve a múltiples organizaciones (tenants); cada organización tiene sus propios productos, clientes, pedidos, usuarios y configuración, aislados entre sí.
 
-TireMax Pro implementa un modelo de fulfillment dual que combina inventario tradicional en almacén con dropshipping directo desde proveedores chinos, optimizando costos y manteniendo una amplia disponibilidad de catálogo.
+El producto cubre el ciclo completo de una operación logística/comercial: inventario y almacén (SGA), pedidos y clientes, punto de venta (TPV), aprovisionamiento, envíos y devoluciones, módulos de ERP (contabilidad, CRM, RRHH, facturación) y cumplimiento fiscal español (SII / Verifactu). Soporta un modelo de fulfillment híbrido que combina stock propio en almacén con dropshipping desde proveedores.
+
+Estado actual: MVP en desarrollo activo.
 
 ## User Preferences
-Preferred communication style: Simple, everyday language.
-Preferred language: Spanish - all communication should be in Spanish, including suggestions and technical explanations.
+
+- Estilo de comunicación: lenguaje sencillo y directo.
+- Idioma: **español** — toda la comunicación, sugerencias y explicaciones técnicas en español.
 
 ## System Architecture
 
 ### Core Technologies
-- **Frontend**: React con TypeScript, Vite, Wouter, TanStack Query.
-- **Backend**: Express.js con TypeScript.
-- **Database**: PostgreSQL con Drizzle ORM.
-- **Styling**: Tailwind CSS con shadcn/ui y Lucide Icons.
+
+- **Frontend:** React 18 + TypeScript, Vite, Wouter (routing), TanStack Query (estado de servidor).
+- **Backend:** Express + TypeScript.
+- **Base de datos:** PostgreSQL con Drizzle ORM.
+- **Estilos:** Tailwind CSS con shadcn/ui (Radix) y Lucide Icons.
 
 ### Architectural Patterns
-- **Monorepo Structure**: Frontend y backend en un solo repositorio.
-- **RESTful API**: Backend con API clara y middleware para logging y manejo de errores.
-- **Component-Based UI**: Componentes React reutilizables.
-- **Type-Safe Development**: TypeScript en todo el stack.
-- **Data Validation**: React Hook Form con Zod.
-- **Real-time Synchronization**: Gestión de estado optimizada con TanStack Query para consistencia de datos.
 
-### Key Features
-- **Gestión de Inventario**: Control de stock, movimientos, entrada rápida y categorización de 810 llantas custom con SKUs autogenerados.
-- **Punto de Venta (TPV)**: Sistema completo para transacciones en tienda con gestión de stock en tiempo real.
-- **Warehouse Management**: Gestión integral de zonas de almacén (8 zonas preconfiguradas) y movimientos de stock, optimizado para llantas.
-- **International Procurement**: Gestión de proveedores chinos, planificación de aprovisionamiento con lead times de 35-50 días y seguimiento de contenedores.
-- **Customer & Orders**: Gestión de clientes, procesamiento de pedidos con numeración personalizada y sistema de reservas.
-- **Advanced Analytics**: Dashboard interactivo, simulación de datos históricos, Sales Velocity Analysis, ABC Classification y Dynamic Reorder Points.
-- **Intelligent Search**: Sistema de búsqueda global de tres niveles (expansión semántica local, expansión AI y búsqueda directa) optimizado para llantas.
-- **Alerts System**: Notificaciones en tiempo real para bajo stock, capacidad de zona y movimientos inusuales.
-- **Dropshipping Híbrido**: Modelo que combina inventario físico y dropshipping directo desde China para productos premium o de baja rotación. Incluye lógica de negocio para identificar productos dropshipping, tablas de base de datos (`products`, `customer_addresses`, `sales`, `sale_items`, `procurement_plans`) y lógica de backend para validación de stock diferencial y creación automática de planes de aprovisionamiento.
-- **UI/UX Design**: Interfaz modernizada, navegación mejorada y optimizaciones móviles (WCAG 2.1 Level AAA).
-- **Tire-Specific Features**: Gestión multi-variante de productos (estilo, tamaño, acabado), seguimiento de lead times de importación, gestión de contenedores y proveedores chinos, y procesamiento de pedidos personalizados.
+- **Monorepo:** frontend (`client/`), backend (`server/`) y código compartido (`shared/`) en un solo repositorio.
+- **Multi-tenancy por columna:** cada tabla de negocio lleva `organizationId` con FK a `organizations` y `onDelete: cascade`; los índices y unique constraints son compuestos por organización (p. ej. `(organizationId, sku)`). El aislamiento entre tenants se valida además en `server/multi-tenant-guards.ts`.
+- **API REST:** Express con middleware de logging, rate limiting y manejo de errores centralizado.
+- **RBAC:** roles (`admin`, `supervisor`, `operador`, `viewer`) y permisos granulares por módulo/acción, sembrados en `server/init-security.ts`.
+- **Type-safe end to end:** TypeScript en todo el stack; los esquemas de validación se derivan del esquema de BD con `drizzle-zod` + Zod.
+- **Sincronización de estado:** TanStack Query en el cliente para consistencia de datos.
+
+### Módulos principales
+
+- **Inventario:** productos con SKU, categorías, stock mín/máx, punto de reorden, stock de seguridad; entrada rápida y búsqueda.
+- **Almacén (SGA):** zonas con capacidad/ocupación, mapa de almacén, movimientos de stock (entrada/salida/transferencia).
+- **Clientes y pedidos:** clientes con direcciones, pedidos con estados, reservas de producto, hojas de preparación en PDF.
+- **TPV:** ventas en tienda con descuento de stock en tiempo real; fulfillment stock + dropshipping.
+- **Aprovisionamiento:** proveedores con lead times, planes de compra y reposición.
+- **Envíos:** agencias de transporte, tarifas por zona/peso, tracking y devoluciones.
+- **ERP:** contabilidad, CRM, RRHH, facturas, compras y cumplimiento fiscal (SII / Verifactu).
+- **Analítica:** dashboard, clasificación ABC, velocidad de venta, puntos de reorden dinámicos.
+- **Administración:** organizaciones, usuarios, invitaciones, roles/permisos, emails autorizados, facturación Stripe.
+
+### Autenticación
+
+Email/contraseña con Passport local (bcrypt, cost 12), con OAuth opcional de Google y Microsoft, y OIDC de Replit opcional (activable con `USE_REPLIT_AUTH`). Incluye verificación de email, reset de contraseña e invitaciones de usuario por organización. Sesiones persistidas en PostgreSQL.
 
 ## External Dependencies
 
-### UI/UX Libraries
-- **shadcn/ui**: Librería de componentes basada en Radix UI.
-- **Tailwind CSS**: Framework CSS utility-first.
-- **Lucide Icons**: Librería de íconos.
+### UI/UX
+- **shadcn/ui** (sobre Radix UI), **Tailwind CSS**, **Lucide Icons**, **Recharts** (gráficas), **jsPDF** (documentos).
 
-### Data Management
-- **Drizzle ORM**: ORM de TypeScript para PostgreSQL.
-- **TanStack Query**: Gestión de estado del servidor y sincronización de datos.
-- **React Hook Form**: Gestión de formularios con validación.
-- **Zod**: Librería de validación de esquemas.
+### Datos
+- **Drizzle ORM** (PostgreSQL), **TanStack Query**, **React Hook Form**, **Zod**.
 
-### Development Tools
-- **Vite**: Herramienta de construcción rápida.
-- **TypeScript**: Superset de JavaScript para seguridad de tipos.
-- **OpenAI GPT-3.5-turbo**: Utilizado para expansión de consultas de búsqueda impulsada por IA.
+### Servicios
+- **Stripe:** suscripciones y facturación.
+- **Resend:** email transaccional.
+- **OpenAI (GPT-3.5-turbo):** expansión de consultas de búsqueda (opcional; hay fallback local y búsqueda directa).
+
+### Herramientas de desarrollo
+- **Vite**, **TypeScript**, **esbuild** (build del servidor), **tsx** (dev), **drizzle-kit** (migraciones).
+
+## Notas de mantenimiento
+
+- El repositorio arrastra restos de migraciones anteriores pendientes de eliminar: `backend/` (Python), `frontend/`, `.emergent/`, capturas `.png` en la raíz y páginas duplicadas (`dashboard-old.tsx`, `products-new.tsx`). No forman parte de la app en ejecución.
+- No hay tests automatizados en el código TypeScript todavía; es la principal deuda técnica a cubrir.

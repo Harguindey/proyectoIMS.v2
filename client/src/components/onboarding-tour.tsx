@@ -9,18 +9,18 @@ import {
 } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  X, 
-  Package, 
-  TrendingUp, 
-  Map, 
+import {
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Package,
+  TrendingUp,
+  Warehouse,
   BarChart3,
-  Users,
-  Settings,
+  ShoppingCart,
+  Truck,
+  FileText,
   CheckCircle,
-  ArrowDown,
   Search
 } from "lucide-react";
 
@@ -41,23 +41,23 @@ interface TourStep {
 const tourSteps: TourStep[] = [
   {
     id: "welcome",
-    title: "¡Bienvenido a StockPro!",
-    description: "Te guiaremos a través de las funcionalidades principales de tu nuevo sistema de gestión de inventarios. Este tour te tomará solo unos minutos.",
+    title: "¡Bienvenido a LogiPro!",
+    description: "Te enseñamos en un minuto las áreas principales de tu plataforma de gestión de inventario, almacén y operaciones. Puedes saltarte el tour cuando quieras.",
     icon: <Package className="h-8 w-8 text-primary" />,
     position: "center"
   },
   {
     id: "dashboard",
     title: "Panel de Control",
-    description: "Aquí tienes una vista general de tu inventario: productos totales, stock bajo, movimientos del día y métricas importantes.",
+    description: "Tu vista general: productos totales, stock bajo, movimientos del día y las métricas clave del negocio.",
     icon: <BarChart3 className="h-6 w-6 text-primary" />,
     position: "center",
     action: { type: "navigate", route: "/" }
   },
   {
     id: "search",
-    title: "Búsqueda Inteligente",
-    description: "Usa la barra de búsqueda para encontrar rápidamente productos, zonas o información específica en cualquier página.",
+    title: "Búsqueda inteligente",
+    description: "Encuentra productos, clientes, pedidos o zonas desde la barra de búsqueda, disponible en cualquier página.",
     icon: <Search className="h-6 w-6 text-primary" />,
     position: "top",
     target: "[data-tour='search']",
@@ -65,48 +65,48 @@ const tourSteps: TourStep[] = [
   },
   {
     id: "products",
-    title: "Gestión de Productos",
-    description: "Administra tu inventario completo: crea productos individuales o múltiples, edita información y controla stock mínimo.",
+    title: "Inventario y productos",
+    description: "Gestiona tu catálogo: alta individual o masiva, SKU, categorías, stock mínimo y punto de reorden.",
     icon: <Package className="h-6 w-6 text-primary" />,
     position: "center",
     action: { type: "navigate", route: "/products" }
   },
   {
-    id: "movements",
-    title: "Movimientos de Stock",
-    description: "Registra entradas y salidas de inventario. Puedes crear movimientos individuales o múltiples para mayor eficiencia.",
-    icon: <TrendingUp className="h-6 w-6 text-primary" />,
-    position: "center", 
-    action: { type: "navigate", route: "/movements" }
-  },
-  {
     id: "warehouse",
-    title: "Mapa del Almacén",
-    description: "Visualiza tu almacén con zonas interactivas. Haz clic en cualquier zona para ver productos y características específicas.",
-    icon: <Map className="h-6 w-6 text-primary" />,
+    title: "Almacén y zonas (SGA)",
+    description: "Visualiza el almacén con zonas interactivas y registra movimientos de stock: entradas, salidas y transferencias.",
+    icon: <Warehouse className="h-6 w-6 text-primary" />,
     position: "center",
     action: { type: "navigate", route: "/warehouse-map" }
   },
   {
-    id: "suppliers",
-    title: "Gestión de Proveedores",
-    description: "Administra tu red de proveedores y mantén información de contacto actualizada para facilitar las compras.",
-    icon: <Users className="h-6 w-6 text-primary" />,
+    id: "pos",
+    title: "TPV / Punto de venta",
+    description: "Cobra en tienda con descuento de stock en tiempo real, con soporte para stock propio y dropshipping.",
+    icon: <ShoppingCart className="h-6 w-6 text-primary" />,
     position: "center",
-    action: { type: "navigate", route: "/suppliers" }
+    action: { type: "navigate", route: "/pos" }
   },
   {
-    id: "procurement",
-    title: "Planificación de Compras",
-    description: "Gestiona planes de aprovisionamiento, calcula reorden automático y mantén tu inventario optimizado.",
-    icon: <Settings className="h-6 w-6 text-primary" />,
+    id: "shipping",
+    title: "Pedidos y envíos",
+    description: "Procesa pedidos de principio a fin: preparación, agencias de transporte, seguimiento de envíos y devoluciones.",
+    icon: <Truck className="h-6 w-6 text-primary" />,
     position: "center",
-    action: { type: "navigate", route: "/procurement" }
+    action: { type: "navigate", route: "/orders" }
+  },
+  {
+    id: "erp",
+    title: "ERP y facturación",
+    description: "Contabilidad, CRM, compras y facturación con cumplimiento fiscal español (SII / Verifactu), todo integrado.",
+    icon: <FileText className="h-6 w-6 text-primary" />,
+    position: "center",
+    action: { type: "navigate", route: "/erp/invoices" }
   },
   {
     id: "complete",
-    title: "¡Tour Completado!",
-    description: "Ya conoces las funcionalidades principales de StockPro. Puedes volver a activar este tour desde el menú de ayuda cuando lo necesites.",
+    title: "¡Todo listo!",
+    description: "Ya conoces lo esencial de LogiPro. Puedes volver a ver este tour cuando quieras desde el menú lateral o la página de menú.",
     icon: <CheckCircle className="h-8 w-8 text-green-600" />,
     position: "center"
   }
@@ -227,8 +227,8 @@ export default function OnboardingTour({ open, onOpenChange, onComplete }: Onboa
                       <Package className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-slate-900">Sistema Completo de Inventarios</h4>
-                      <p className="text-sm text-slate-600">Gestión avanzada con zonas, movimientos y reportes</p>
+                      <h4 className="font-semibold text-slate-900">Inventario, almacén y operaciones</h4>
+                      <p className="text-sm text-slate-600">Inventario, SGA, TPV, envíos y ERP en una sola plataforma</p>
                     </div>
                   </div>
                 </CardContent>

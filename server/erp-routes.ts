@@ -13,6 +13,72 @@ function getOrganizationId(req: any, res: any): number | null {
   return organizationId;
 }
 
+/** Error de validación de entrada (se traduce a HTTP 400). */
+class BadRequestError extends Error {}
+
+/**
+ * Normaliza el body de una petición antes de insertarlo en la BD:
+ *  - Convierte cadenas vacías ("") en undefined, para no mandar "" a columnas
+ *    numéricas, de fecha o foráneas (causa habitual de errores 500 en Postgres).
+ *  - Convierte los campos de fecha indicados de string ISO a Date.
+ *    Lanza BadRequestError si una fecha no es válida.
+ */
+function normalizeBody(
+  body: Record<string, any> | undefined,
+  dateFields: string[] = [],
+): Record<string, any> {
+  const out: Record<string, any> = {};
+  for (const [key, value] of Object.entries(body ?? {})) {
+    out[key] = value === "" ? undefined : value;
+  }
+  for (const field of dateFields) {
+    if (out[field] != null) {
+      const parsed = new Date(out[field]);
+      if (isNaN(parsed.getTime())) {
+        throw new BadRequestError(`Fecha inválida en el campo "${field}"`);
+      }
+      out[field] = parsed;
+    }
+  }
+  return out;
+}
+
+/**
+ * Traduce errores de validación y de Postgres a respuestas HTTP útiles,
+ * en lugar de un 500 mudo. Deja el 500 solo para errores realmente inesperados.
+ */
+function sendDbError(res: any, e: any) {
+  if (e instanceof BadRequestError) {
+    return res.status(400).json({ message: e.message });
+  }
+  // Drizzle envuelve el error de Postgres en un DrizzleQueryError; el código y la
+  // columna reales viven en e.cause. Desenvolvemos para leerlos.
+  const pgErr = e?.code ? e : (e?.cause ?? e);
+  const code = pgErr?.code;
+  const column = pgErr?.column;
+  switch (code) {
+    case "23505": // unique_violation
+      return res.status(409).json({
+        message: "Ya existe un registro con ese valor único (por ejemplo, un código o número duplicado).",
+      });
+    case "23502": // not_null_violation
+      return res.status(400).json({
+        message: `Falta un campo obligatorio${column ? `: ${column}` : ""}.`,
+      });
+    case "23503": // foreign_key_violation
+      return res.status(400).json({
+        message: "Referencia inválida: el elemento relacionado no existe.",
+      });
+    case "22P02": // invalid_text_representation
+    case "22007": // invalid_datetime_format
+    case "22008": // datetime_field_overflow
+      return res.status(400).json({ message: "Formato de dato inválido (número o fecha)." });
+    default:
+      console.error("ERP DB error:", e);
+      return res.status(500).json({ message: "Error interno del servidor" });
+  }
+}
+
 export function registerErpRoutes(app: Express) {
 
   // ==================== FISCAL COMPLIANCE DASHBOARD ====================
@@ -149,8 +215,8 @@ export function registerErpRoutes(app: Express) {
     try {
       const orgId = getOrganizationId(req, res);
       if (!orgId) return;
-      res.status(201).json(await erpStorage.createTaxRate(orgId, req.body));
-    } catch (e) { res.status(500).json({ message: "Error" }); }
+      res.status(201).json(await erpStorage.createTaxRate(orgId, normalizeBody(req.body)));
+    } catch (e) { sendDbError(res, e); }
   });
 
   // ==================== INVOICES ====================
@@ -196,17 +262,16 @@ export function registerErpRoutes(app: Express) {
       const orgId = getOrganizationId(req, res);
       if (!orgId) return;
       const { items, ...invoiceData } = req.body;
-      const invoice = await erpStorage.createInvoice(orgId, invoiceData);
+      const invoice = await erpStorage.createInvoice(orgId, normalizeBody(invoiceData, ["issueDate", "dueDate"]));
       if (items && Array.isArray(items)) {
         for (const item of items) {
-          await erpStorage.createInvoiceItem(orgId, { ...item, invoiceId: invoice.id });
+          await erpStorage.createInvoiceItem(orgId, { ...normalizeBody(item), invoiceId: invoice.id });
         }
       }
       const createdItems = await erpStorage.getInvoiceItems(orgId, invoice.id);
       res.status(201).json({ ...invoice, items: createdItems });
     } catch (error) {
-      console.error("Error creating invoice:", error);
-      res.status(500).json({ message: "Error creating invoice" });
+      sendDbError(res, error);
     }
   });
 
@@ -215,17 +280,17 @@ export function registerErpRoutes(app: Express) {
       const orgId = getOrganizationId(req, res);
       if (!orgId) return;
       const { items, ...data } = req.body;
-      const updated = await erpStorage.updateInvoice(orgId, parseInt(req.params.id), data);
+      const updated = await erpStorage.updateInvoice(orgId, parseInt(req.params.id), normalizeBody(data, ["issueDate", "dueDate"]));
       if (!updated) return res.status(404).json({ message: "Not found" });
       if (items && Array.isArray(items)) {
         await erpStorage.deleteInvoiceItems(orgId, updated.id);
         for (const item of items) {
-          await erpStorage.createInvoiceItem(orgId, { ...item, invoiceId: updated.id });
+          await erpStorage.createInvoiceItem(orgId, { ...normalizeBody(item), invoiceId: updated.id });
         }
       }
       res.json(updated);
     } catch (error) {
-      res.status(500).json({ message: "Error" });
+      sendDbError(res, error);
     }
   });
 
@@ -326,8 +391,8 @@ export function registerErpRoutes(app: Express) {
     try {
       const orgId = getOrganizationId(req, res);
       if (!orgId) return;
-      res.status(201).json(await erpStorage.createCreditNote(orgId, req.body));
-    } catch (e) { res.status(500).json({ message: "Error" }); }
+      res.status(201).json(await erpStorage.createCreditNote(orgId, normalizeBody(req.body, ["issueDate"])));
+    } catch (e) { sendDbError(res, e); }
   });
 
   // ==================== DELIVERY NOTES ====================
@@ -342,17 +407,17 @@ export function registerErpRoutes(app: Express) {
     try {
       const orgId = getOrganizationId(req, res);
       if (!orgId) return;
-      res.status(201).json(await erpStorage.createDeliveryNote(orgId, req.body));
-    } catch (e) { res.status(500).json({ message: "Error" }); }
+      res.status(201).json(await erpStorage.createDeliveryNote(orgId, normalizeBody(req.body, ["issueDate", "deliveryDate"])));
+    } catch (e) { sendDbError(res, e); }
   });
   app.patch("/api/erp/delivery-notes/:id", isAuthenticated, async (req, res) => {
     try {
       const orgId = getOrganizationId(req, res);
       if (!orgId) return;
-      const r = await erpStorage.updateDeliveryNote(orgId, parseInt(req.params.id), req.body);
+      const r = await erpStorage.updateDeliveryNote(orgId, parseInt(req.params.id), normalizeBody(req.body, ["issueDate", "deliveryDate"]));
       if (!r) return res.status(404).json({ message: "Not found" });
       res.json(r);
-    } catch (e) { res.status(500).json({ message: "Error" }); }
+    } catch (e) { sendDbError(res, e); }
   });
 
   // ==================== PURCHASE ORDERS ====================
@@ -378,16 +443,15 @@ export function registerErpRoutes(app: Express) {
       const orgId = getOrganizationId(req, res);
       if (!orgId) return;
       const { items, ...poData } = req.body;
-      const po = await erpStorage.createPurchaseOrder(orgId, poData);
+      const po = await erpStorage.createPurchaseOrder(orgId, normalizeBody(poData, ["orderDate", "expectedDate", "receivedDate"]));
       if (items && Array.isArray(items)) {
         for (const item of items) {
-          await erpStorage.createPurchaseOrderItem(orgId, { ...item, purchaseOrderId: po.id });
+          await erpStorage.createPurchaseOrderItem(orgId, { ...normalizeBody(item), purchaseOrderId: po.id });
         }
       }
       res.status(201).json(po);
     } catch (error) {
-      console.error("Error:", error);
-      res.status(500).json({ message: "Error" });
+      sendDbError(res, error);
     }
   });
   app.patch("/api/erp/purchase-orders/:id", isAuthenticated, async (req, res) => {
@@ -395,16 +459,16 @@ export function registerErpRoutes(app: Express) {
       const orgId = getOrganizationId(req, res);
       if (!orgId) return;
       const { items, ...data } = req.body;
-      const r = await erpStorage.updatePurchaseOrder(orgId, parseInt(req.params.id), data);
+      const r = await erpStorage.updatePurchaseOrder(orgId, parseInt(req.params.id), normalizeBody(data, ["orderDate", "expectedDate", "receivedDate"]));
       if (!r) return res.status(404).json({ message: "Not found" });
       if (items && Array.isArray(items)) {
         await erpStorage.deletePurchaseOrderItems(orgId, r.id);
         for (const item of items) {
-          await erpStorage.createPurchaseOrderItem(orgId, { ...item, purchaseOrderId: r.id });
+          await erpStorage.createPurchaseOrderItem(orgId, { ...normalizeBody(item), purchaseOrderId: r.id });
         }
       }
       res.json(r);
-    } catch (e) { res.status(500).json({ message: "Error" }); }
+    } catch (e) { sendDbError(res, e); }
   });
   app.delete("/api/erp/purchase-orders/:id", isAuthenticated, async (req, res) => {
     try {
@@ -430,8 +494,8 @@ export function registerErpRoutes(app: Express) {
     try {
       const orgId = getOrganizationId(req, res);
       if (!orgId) return;
-      res.status(201).json(await erpStorage.createAccount(orgId, req.body));
-    } catch (e) { res.status(500).json({ message: "Error" }); }
+      res.status(201).json(await erpStorage.createAccount(orgId, normalizeBody(req.body)));
+    } catch (e) { sendDbError(res, e); }
   });
   app.get("/api/erp/journal-entries", isAuthenticated, async (req, res) => {
     try {
@@ -445,16 +509,15 @@ export function registerErpRoutes(app: Express) {
       const orgId = getOrganizationId(req, res);
       if (!orgId) return;
       const { lines, ...entryData } = req.body;
-      const entry = await erpStorage.createJournalEntry(orgId, entryData);
+      const entry = await erpStorage.createJournalEntry(orgId, normalizeBody(entryData, ["date"]));
       if (lines && Array.isArray(lines)) {
         for (const line of lines) {
-          await erpStorage.createJournalEntryLine(orgId, { ...line, journalEntryId: entry.id });
+          await erpStorage.createJournalEntryLine(orgId, { ...normalizeBody(line), journalEntryId: entry.id });
         }
       }
       res.status(201).json(entry);
     } catch (e) {
-      console.error("Error:", e);
-      res.status(500).json({ message: "Error" });
+      sendDbError(res, e);
     }
   });
   app.get("/api/erp/fiscal-years", isAuthenticated, async (req, res) => {
@@ -468,8 +531,8 @@ export function registerErpRoutes(app: Express) {
     try {
       const orgId = getOrganizationId(req, res);
       if (!orgId) return;
-      res.status(201).json(await erpStorage.createFiscalYear(orgId, req.body));
-    } catch (e) { res.status(500).json({ message: "Error" }); }
+      res.status(201).json(await erpStorage.createFiscalYear(orgId, normalizeBody(req.body, ["startDate", "endDate"])));
+    } catch (e) { sendDbError(res, e); }
   });
 
   // ==================== CRM ====================
@@ -484,17 +547,17 @@ export function registerErpRoutes(app: Express) {
     try {
       const orgId = getOrganizationId(req, res);
       if (!orgId) return;
-      res.status(201).json(await erpStorage.createCrmActivity(orgId, req.body));
-    } catch (e) { res.status(500).json({ message: "Error" }); }
+      res.status(201).json(await erpStorage.createCrmActivity(orgId, normalizeBody(req.body, ["dueDate", "completedDate"])));
+    } catch (e) { sendDbError(res, e); }
   });
   app.patch("/api/erp/crm/activities/:id", isAuthenticated, async (req, res) => {
     try {
       const orgId = getOrganizationId(req, res);
       if (!orgId) return;
-      const r = await erpStorage.updateCrmActivity(orgId, parseInt(req.params.id), req.body);
+      const r = await erpStorage.updateCrmActivity(orgId, parseInt(req.params.id), normalizeBody(req.body, ["dueDate", "completedDate"]));
       if (!r) return res.status(404).json({ message: "Not found" });
       res.json(r);
-    } catch (e) { res.status(500).json({ message: "Error" }); }
+    } catch (e) { sendDbError(res, e); }
   });
   app.delete("/api/erp/crm/activities/:id", isAuthenticated, async (req, res) => {
     try {
@@ -517,17 +580,17 @@ export function registerErpRoutes(app: Express) {
     try {
       const orgId = getOrganizationId(req, res);
       if (!orgId) return;
-      res.status(201).json(await erpStorage.createCrmDeal(orgId, req.body));
-    } catch (e) { res.status(500).json({ message: "Error" }); }
+      res.status(201).json(await erpStorage.createCrmDeal(orgId, normalizeBody(req.body, ["expectedCloseDate", "closedDate"])));
+    } catch (e) { sendDbError(res, e); }
   });
   app.patch("/api/erp/crm/deals/:id", isAuthenticated, async (req, res) => {
     try {
       const orgId = getOrganizationId(req, res);
       if (!orgId) return;
-      const r = await erpStorage.updateCrmDeal(orgId, parseInt(req.params.id), req.body);
+      const r = await erpStorage.updateCrmDeal(orgId, parseInt(req.params.id), normalizeBody(req.body, ["expectedCloseDate", "closedDate"]));
       if (!r) return res.status(404).json({ message: "Not found" });
       res.json(r);
-    } catch (e) { res.status(500).json({ message: "Error" }); }
+    } catch (e) { sendDbError(res, e); }
   });
   app.delete("/api/erp/crm/deals/:id", isAuthenticated, async (req, res) => {
     try {
@@ -551,17 +614,17 @@ export function registerErpRoutes(app: Express) {
     try {
       const orgId = getOrganizationId(req, res);
       if (!orgId) return;
-      res.status(201).json(await erpStorage.createDepartment(orgId, req.body));
-    } catch (e) { res.status(500).json({ message: "Error" }); }
+      res.status(201).json(await erpStorage.createDepartment(orgId, normalizeBody(req.body)));
+    } catch (e) { sendDbError(res, e); }
   });
   app.patch("/api/erp/departments/:id", isAuthenticated, async (req, res) => {
     try {
       const orgId = getOrganizationId(req, res);
       if (!orgId) return;
-      const r = await erpStorage.updateDepartment(orgId, parseInt(req.params.id), req.body);
+      const r = await erpStorage.updateDepartment(orgId, parseInt(req.params.id), normalizeBody(req.body));
       if (!r) return res.status(404).json({ message: "Not found" });
       res.json(r);
-    } catch (e) { res.status(500).json({ message: "Error" }); }
+    } catch (e) { sendDbError(res, e); }
   });
   app.delete("/api/erp/departments/:id", isAuthenticated, async (req, res) => {
     try {
@@ -593,20 +656,19 @@ export function registerErpRoutes(app: Express) {
     try {
       const orgId = getOrganizationId(req, res);
       if (!orgId) return;
-      res.status(201).json(await erpStorage.createEmployee(orgId, req.body));
+      res.status(201).json(await erpStorage.createEmployee(orgId, normalizeBody(req.body, ["startDate", "endDate"])));
     } catch (e) {
-      console.error("Error:", e);
-      res.status(500).json({ message: "Error" });
+      sendDbError(res, e);
     }
   });
   app.patch("/api/erp/employees/:id", isAuthenticated, async (req, res) => {
     try {
       const orgId = getOrganizationId(req, res);
       if (!orgId) return;
-      const r = await erpStorage.updateEmployee(orgId, parseInt(req.params.id), req.body);
+      const r = await erpStorage.updateEmployee(orgId, parseInt(req.params.id), normalizeBody(req.body, ["startDate", "endDate"]));
       if (!r) return res.status(404).json({ message: "Not found" });
       res.json(r);
-    } catch (e) { res.status(500).json({ message: "Error" }); }
+    } catch (e) { sendDbError(res, e); }
   });
   app.delete("/api/erp/employees/:id", isAuthenticated, async (req, res) => {
     try {

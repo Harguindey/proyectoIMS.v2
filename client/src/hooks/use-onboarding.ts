@@ -1,45 +1,83 @@
-import { useState, useEffect } from "react";
+import {
+  createContext,
+  createElement,
+  useContext,
+  useState,
+  type ReactNode,
+} from "react";
 
-const ONBOARDING_STORAGE_KEY = "stockpro-onboarding-completed";
+const ONBOARDING_STORAGE_KEY = "logipro-onboarding-completed";
 
-export function useOnboarding() {
-  const [isOnboardingComplete, setIsOnboardingComplete] = useState(true);
+function readSeen(): boolean {
+  try {
+    return localStorage.getItem(ONBOARDING_STORAGE_KEY) === "true";
+  } catch {
+    // localStorage no disponible (modo privado, bloqueado…): tratamos como "visto"
+    // para no arriesgar mostrar el tour en bucle.
+    return true;
+  }
+}
+
+function persistSeen(): void {
+  try {
+    localStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
+  } catch {
+    /* no-op */
+  }
+}
+
+interface OnboardingContextValue {
+  /** El tour está abierto ahora mismo */
+  showTour: boolean;
+  /** Abre el tour manualmente (botón "ver tutorial"). Siempre lo muestra. */
+  startTour: () => void;
+  /** Cierra el tour y lo marca como visto para que no vuelva a salir solo. */
+  closeTour: () => void;
+  /** Muestra el tour SOLO si el usuario no lo ha visto nunca. */
+  maybeAutoStart: () => void;
+}
+
+const OnboardingContext = createContext<OnboardingContextValue | null>(null);
+
+/**
+ * Provider único de estado del tour de onboarding.
+ * Un solo estado compartido por toda la app, de forma que el auto-arranque
+ * y los botones "ver tutorial" (sidebar, menú) controlen el mismo tour.
+ */
+export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [showTour, setShowTour] = useState(false);
 
-  useEffect(() => {
-    // Check if user has completed onboarding
-    const completed = localStorage.getItem(ONBOARDING_STORAGE_KEY);
-    if (!completed) {
-      setIsOnboardingComplete(false);
-      // Show tour after a short delay to let the app load
-      setTimeout(() => {
-        setShowTour(true);
-      }, 1000);
-    }
-  }, []);
+  const startTour = () => setShowTour(true);
 
-  const completeOnboarding = () => {
-    localStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
-    setIsOnboardingComplete(true);
+  const closeTour = () => {
+    persistSeen();
     setShowTour(false);
   };
 
-  const startTour = () => {
-    setShowTour(true);
+  const maybeAutoStart = () => {
+    if (!readSeen()) setShowTour(true);
   };
 
-  const resetOnboarding = () => {
-    localStorage.removeItem(ONBOARDING_STORAGE_KEY);
-    setIsOnboardingComplete(false);
-    setShowTour(true);
-  };
+  return createElement(
+    OnboardingContext.Provider,
+    { value: { showTour, startTour, closeTour, maybeAutoStart } },
+    children,
+  );
+}
 
-  return {
-    isOnboardingComplete,
-    showTour,
-    setShowTour,
-    completeOnboarding,
-    startTour,
-    resetOnboarding,
-  };
+/**
+ * Acceso al estado del tour. Fuera del provider devuelve no-ops para
+ * evitar que un componente reviente si se usa sin envolver.
+ */
+export function useOnboarding(): OnboardingContextValue {
+  const ctx = useContext(OnboardingContext);
+  if (!ctx) {
+    return {
+      showTour: false,
+      startTour: () => {},
+      closeTour: () => {},
+      maybeAutoStart: () => {},
+    };
+  }
+  return ctx;
 }
