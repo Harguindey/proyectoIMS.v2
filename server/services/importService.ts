@@ -190,7 +190,7 @@ export class ImportService {
     }
   }
 
-  async importProducts(
+   async importProducts(
     data: any[], 
     options: ImportOptions = {}
   ): Promise<ImportResult> {
@@ -217,9 +217,27 @@ export class ImportService {
       'cantidad_pedido': 'orderQuantity'
     };
 
+    // Esquema de importación: convierte números desde texto y deja todo opcional menos el nombre
+    const productImportSchema = z.object({
+      name: z.string().min(1, 'El nombre es obligatorio'),
+      sku: z.string().optional(),
+      description: z.string().optional(),
+      category: z.string().optional(),
+      currentStock: z.coerce.number().optional().default(0),
+      minStock: z.coerce.number().optional().default(0),
+      maxStock: z.coerce.number().optional().default(0),
+      unitPrice: z.coerce.number().optional().default(0),
+      warehouseZoneId: z.coerce.number().optional(),
+      leadTimeDays: z.coerce.number().optional(),
+      supplierId: z.coerce.number().optional(),
+      supplierName: z.string().optional(),
+      reorderPoint: z.coerce.number().optional(),
+      orderQuantity: z.coerce.number().optional(),
+    });
+
     const { validData, errors, warnings } = this.validateAndParseData(
       processData, 
-      insertProductSchema, 
+      productImportSchema, 
       fieldMapping
     );
 
