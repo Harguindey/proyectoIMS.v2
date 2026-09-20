@@ -181,6 +181,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/auth/user", isAuthenticated, getUserPermissionsHandler);
 
   /**
+   * PUT /api/me/theme — guarda la paleta de la interfaz elegida por el usuario.
+   * Body: { theme: string, custom?: { primary?, accent? } | null }
+   */
+  app.put("/api/me/theme", isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      if (!userId) return res.status(401).json({ message: "No autenticado" });
+
+      const { theme, custom } = req.body ?? {};
+      const allowed = ["teal", "indigo", "warm", "midnight", "carbon", "graphite", "custom"];
+      if (typeof theme !== "string" || !allowed.includes(theme)) {
+        return res.status(400).json({ message: "Tema no válido" });
+      }
+
+      await storage.updateUser(userId, {
+        uiTheme: theme,
+        uiThemeCustom: theme === "custom" ? (custom ?? null) : null,
+      } as any);
+
+      res.json({ success: true, theme, custom: theme === "custom" ? (custom ?? null) : null });
+    } catch (error) {
+      console.error("Error guardando tema:", error);
+      res.status(500).json({ message: "Error guardando el tema" });
+    }
+  });
+
+  /**
    * POST /api/auth/register
    * Creates a brand-new organization + admin user in a single transaction.
    * Body: { email, password, firstName, lastName, companyName, country? }

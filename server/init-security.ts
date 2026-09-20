@@ -1,5 +1,6 @@
 import { storage } from "./storage";
 import { db } from "./db";
+import { sql } from "drizzle-orm";
 import { sessions } from "@shared/schema";
 
 // Default roles and permissions configuration for production security
@@ -155,6 +156,10 @@ export async function initializeSecurity(): Promise<void> {
     // Ensure sessions table exists
     await ensureSessionsTableExists();
 
+    // Auto-migración idempotente: columnas de personalización de tema por usuario.
+    // Evita tener que ejecutar db:push manualmente contra la BD de producción.
+    await ensureUserThemeColumns();
+
     // Initialize permissions first (required for role assignments)
     console.log('📝 Creating default permissions...');
     const permissionMap = new Map<string, number>();
@@ -255,6 +260,20 @@ async function ensureSessionsTableExists(): Promise<void> {
   } catch (error) {
     console.error('❌ Sessions table issue:', error);
     throw new Error('Sessions table is not properly configured. Run: npm run db:push');
+  }
+}
+
+/**
+ * Idempotent: adds the per-user theme columns if they don't exist yet.
+ * Safe to run on every boot; no-op once the columns are present.
+ */
+async function ensureUserThemeColumns(): Promise<void> {
+  try {
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ui_theme varchar(30) DEFAULT 'teal'`);
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ui_theme_custom json`);
+    console.log('✅ User theme columns ensured');
+  } catch (error) {
+    console.error('❌ Error ensuring user theme columns:', error);
   }
 }
 

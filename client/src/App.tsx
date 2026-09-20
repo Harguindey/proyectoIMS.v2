@@ -42,6 +42,7 @@ import { Header } from "@/components/Header";
 import OnboardingTour from "@/components/onboarding-tour";
 import { AdminOnly } from "@/components/protected-component";
 import { OnboardingProvider, useOnboarding } from "@/hooks/use-onboarding";
+import { applyTheme, getStoredTheme, getStoredCustom } from "@/lib/theme";
 import { DeviceProvider } from "@/hooks/use-device-detection";
 import LoginPage from "@/pages/login";
 import SignupPage from "@/pages/signup";
@@ -72,6 +73,12 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     },
     retry: false,
   });
+
+  // Sincroniza la paleta guardada en la cuenta cuando carga el usuario.
+  useEffect(() => {
+    const t = (data as any)?.user?.uiTheme;
+    if (t) applyTheme(t, (data as any)?.user?.uiThemeCustom ?? null);
+  }, [data]);
 
   if (PUBLIC_PATHS.includes(path)) return <>{children}</>;
 
@@ -238,6 +245,11 @@ function ProductTheme() {
 }
 
 function App() {
+  // Aplica al instante la paleta cacheada (antes de que responda el backend).
+  useEffect(() => {
+    applyTheme(getStoredTheme(), getStoredCustom());
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <DeviceProvider>

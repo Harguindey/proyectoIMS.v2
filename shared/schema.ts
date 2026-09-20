@@ -23,6 +23,8 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   emailVerified: boolean("email_verified").default(false).notNull(),
+  uiTheme: varchar("ui_theme", { length: 30 }).default("teal"),
+  uiThemeCustom: json("ui_theme_custom"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -34,6 +34,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useChartTheme } from "@/hooks/use-chart-theme";
 import ChartThemeSelector from "@/components/chart-theme-selector";
+import AppThemeSelector from "@/components/app-theme-selector";
+import { applyTheme, getStoredTheme, saveThemeToAccount } from "@/lib/theme";
 
 interface SystemSettings {
   id: number;
@@ -74,6 +76,18 @@ interface UserProfile {
 export default function Settings() {
   const { toast } = useToast();
   const { currentTheme, changeTheme } = useChartTheme();
+
+  // Paleta de la aplicación
+  const [appTheme, setAppTheme] = useState(getStoredTheme());
+  const handleAppThemeChange = (id: string) => {
+    setAppTheme(id);
+    applyTheme(id);
+    saveThemeToAccount(id);
+    toast({
+      title: "Paleta aplicada",
+      description: "Tu nueva paleta se ha guardado en tu cuenta.",
+    });
+  };
 
   // ── Load real session user data ─────────────────────────────────────────────
   const { data: authData } = useQuery({
@@ -652,6 +666,19 @@ export default function Settings() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
+                  <div>
+                    <Label className="text-base font-medium">Paleta de la aplicación</Label>
+                    <p className="text-sm text-slate-500 mb-4">
+                      Elige el aspecto de LogiPro. Se aplica al instante y se guarda en tu cuenta.
+                    </p>
+                    <AppThemeSelector
+                      currentTheme={appTheme}
+                      onThemeChange={handleAppThemeChange}
+                    />
+                  </div>
+
+                  <Separator />
+
                   <div>
                     <Label className="text-base font-medium">Tema de Gráficos</Label>
                     <p className="text-sm text-slate-500 mb-4">

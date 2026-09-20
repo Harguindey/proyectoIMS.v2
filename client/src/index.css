@@ -55,6 +55,33 @@
   --success-foreground: hsl(0, 0%, 98%);
 }
 
+/* ===== PALETAS DE LA APLICACIÓN (seleccionables en Ajustes → Apariencia) =====
+   Cada paleta sobreescribe las variables de color de :root. El selector pone
+   data-theme="<id>" en <html> y toda la interfaz se repinta al instante. */
+:root[data-theme="teal"] {
+  --primary: hsl(174, 80%, 30%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --ring: hsl(174, 80%, 30%);
+  --accent: hsl(192, 91%, 36%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  --success: hsl(151, 55%, 42%);
+  --success-foreground: hsl(0, 0%, 100%);
+}
+:root[data-theme="indigo"] {
+  --primary: hsl(245, 75%, 59%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --ring: hsl(245, 75%, 59%);
+  --accent: hsl(262, 83%, 58%);
+  --accent-foreground: hsl(0, 0%, 100%);
+}
+:root[data-theme="warm"] {
+  --primary: hsl(21, 90%, 48%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --ring: hsl(21, 90%, 48%);
+  --accent: hsl(35, 92%, 44%);
+  --accent-foreground: hsl(0, 0%, 100%);
+}
+
 @layer base {
   * {
     @apply border-border;
