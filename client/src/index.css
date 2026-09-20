@@ -58,6 +58,19 @@
 /* ===== PALETAS DE LA APLICACIÓN (seleccionables en Ajustes → Apariencia) =====
    Cada paleta sobreescribe las variables de color de :root. El selector pone
    data-theme="<id>" en <html> y toda la interfaz se repinta al instante. */
+/* Tokens de la barra lateral (por defecto = teal claro) */
+:root {
+  --sidebar-background: hsl(168, 27%, 95%);
+  --sidebar-foreground: hsl(185, 20%, 30%);
+  --sidebar-strong: hsl(174, 55%, 16%);
+  --sidebar-muted: hsl(175, 14%, 52%);
+  --sidebar-border: hsl(170, 22%, 88%);
+  --sidebar-hover: hsl(168, 30%, 90%);
+  --sidebar-active-bg: hsl(174, 80%, 30%);
+  --sidebar-active-fg: hsl(0, 0%, 100%);
+  --sidebar-primary: hsl(174, 80%, 30%);
+}
+
 :root[data-theme="teal"] {
   --primary: hsl(174, 80%, 30%);
   --primary-foreground: hsl(0, 0%, 100%);
@@ -66,6 +79,15 @@
   --accent-foreground: hsl(0, 0%, 100%);
   --success: hsl(151, 55%, 42%);
   --success-foreground: hsl(0, 0%, 100%);
+  --sidebar-background: hsl(168, 27%, 95%);
+  --sidebar-foreground: hsl(185, 20%, 30%);
+  --sidebar-strong: hsl(174, 55%, 16%);
+  --sidebar-muted: hsl(175, 14%, 52%);
+  --sidebar-border: hsl(170, 22%, 88%);
+  --sidebar-hover: hsl(168, 30%, 90%);
+  --sidebar-active-bg: hsl(174, 80%, 30%);
+  --sidebar-active-fg: hsl(0, 0%, 100%);
+  --sidebar-primary: hsl(174, 80%, 30%);
 }
 :root[data-theme="indigo"] {
   --primary: hsl(245, 75%, 59%);
@@ -73,6 +95,15 @@
   --ring: hsl(245, 75%, 59%);
   --accent: hsl(262, 83%, 58%);
   --accent-foreground: hsl(0, 0%, 100%);
+  --sidebar-background: hsl(0, 0%, 100%);
+  --sidebar-foreground: hsl(240, 15%, 35%);
+  --sidebar-strong: hsl(245, 40%, 25%);
+  --sidebar-muted: hsl(240, 12%, 60%);
+  --sidebar-border: hsl(240, 20%, 92%);
+  --sidebar-hover: hsl(245, 60%, 97%);
+  --sidebar-active-bg: hsl(245, 75%, 59%);
+  --sidebar-active-fg: hsl(0, 0%, 100%);
+  --sidebar-primary: hsl(245, 75%, 59%);
 }
 :root[data-theme="warm"] {
   --primary: hsl(21, 90%, 48%);
@@ -80,7 +111,32 @@
   --ring: hsl(21, 90%, 48%);
   --accent: hsl(35, 92%, 44%);
   --accent-foreground: hsl(0, 0%, 100%);
+  --sidebar-background: hsl(40, 20%, 96%);
+  --sidebar-foreground: hsl(25, 10%, 35%);
+  --sidebar-strong: hsl(20, 25%, 18%);
+  --sidebar-muted: hsl(30, 8%, 55%);
+  --sidebar-border: hsl(35, 18%, 88%);
+  --sidebar-hover: hsl(35, 30%, 92%);
+  --sidebar-active-bg: hsl(21, 90%, 48%);
+  --sidebar-active-fg: hsl(0, 0%, 100%);
+  --sidebar-primary: hsl(21, 90%, 48%);
 }
+
+/* Clases de la barra lateral (usan los tokens de arriba, cambian con la paleta) */
+.side-root { background: var(--sidebar-background); }
+.side-border { border-color: var(--sidebar-border); }
+.side-title { color: var(--sidebar-strong); }
+.side-tagline { color: var(--sidebar-muted); }
+.side-logo { background: var(--sidebar-primary); }
+.side-section { color: var(--sidebar-muted); }
+.side-section:hover { color: var(--sidebar-strong); }
+.side-item { color: var(--sidebar-foreground); }
+.side-item:hover { color: var(--sidebar-strong); background: var(--sidebar-hover); }
+.side-item-active { color: var(--sidebar-active-fg); background: var(--sidebar-active-bg); }
+.side-icon { color: var(--sidebar-muted); }
+.side-item:hover .side-icon { color: var(--sidebar-strong); }
+.side-icon-active { color: var(--sidebar-active-fg); }
+.side-card { background: var(--sidebar-hover); border-color: var(--sidebar-border); }
 
 @layer base {
   * {

@@ -1,12 +1,12 @@
 import { Link, useLocation } from "wouter";
-import { 
-  Warehouse, 
-  ChartPie, 
-  Map, 
-  Package, 
-  ArrowUpDown, 
-  BarChart3, 
-  Settings, 
+import {
+  Warehouse,
+  ChartPie,
+  Map,
+  Package,
+  ArrowUpDown,
+  BarChart3,
+  Settings,
   User,
   Users,
   Calendar,
@@ -144,7 +144,7 @@ const adminNavigation = [
 function MobileNavigation() {
   const [location] = useLocation();
   const { isMobile } = useDeviceDetection();
-  
+
   const mobileNavItems = [
     { name: "Inicio", href: "/", icon: Home },
     { name: "Productos", href: "/products", icon: Package },
@@ -154,7 +154,7 @@ function MobileNavigation() {
   ];
 
   return (
-    <div 
+    <div
       className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 safe-area-bottom"
       data-testid="mobile-navigation"
     >
@@ -162,15 +162,15 @@ function MobileNavigation() {
         {mobileNavItems.map((item) => {
           const isActive = location === item.href;
           const Icon = item.icon;
-          
+
           return (
             <Link key={item.name} href={item.href}>
-              <div 
+              <div
                 className={`
                   flex flex-col items-center rounded-lg transition-colors
                   px-2 py-2 min-w-[60px] min-h-[60px] flex-1 max-w-[80px]
-                  ${isActive 
-                    ? 'text-blue-600 bg-blue-50' 
+                  ${isActive
+                    ? 'text-primary bg-primary/10'
                     : 'text-slate-500 hover:text-slate-700'
                   }
                 `}
@@ -219,15 +219,15 @@ const toggleSection = (title: string) => {
   return (
     <>
       {/* Desktop Sidebar */}
-        <div className="hidden md:flex w-72 bg-[#020817] border-r border-slate-800 flex-col flex-shrink-0">        {/* Logo and Header */}
-        <div className="px-5 py-6 border-b border-slate-800">
+        <div className="hidden md:flex w-72 side-root border-r side-border flex-col flex-shrink-0">        {/* Logo and Header */}
+        <div className="px-5 py-6 border-b side-border">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/30">
+            <div className="w-10 h-10 side-logo rounded-2xl flex items-center justify-center">
               <Warehouse className="text-white" size={18} />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-white tracking-tight">{product.name}</h1>
-              <p className="text-xs text-slate-400">{product.tagline}</p>
+              <h1 className="text-lg font-bold side-title tracking-tight">{product.name}</h1>
+              <p className="text-xs side-tagline">{product.tagline}</p>
             </div>
           </div>
         </div>
@@ -240,7 +240,7 @@ const toggleSection = (title: string) => {
           <button
             type="button"
             onClick={() => toggleSection(section.title!)}
-            className="w-full flex items-center justify-between px-3 pt-4 pb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider hover:text-slate-300 transition"
+            className="side-section w-full flex items-center justify-between px-3 pt-4 pb-2 text-xs font-semibold uppercase tracking-wider transition"
          >
             <span>{section.title}</span>
             <ChevronDown
@@ -258,17 +258,14 @@ const toggleSection = (title: string) => {
                 const Icon: LucideIcon = typeof item.icon === "string"
                   ? (ICON_MAP[item.icon] ?? Package)
                   : (item.icon as LucideIcon);
-                
+
                 return (
                   <Link key={item.name} href={item.href}>
                     <div className={`
                       flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors
-                      ${isActive 
-                       ? 'bg-slate-800 text-white shadow-sm' 
-                       : 'text-slate-400 hover:text-white hover:bg-slate-900'
-                      }
+                      ${isActive ? 'side-item-active' : 'side-item'}
                     `}>
-                      <Icon className={`mr-3 ${isActive ? 'text-blue-400' : 'text-slate-500'}`} size={18} />
+                      <Icon className={`mr-3 ${isActive ? 'side-icon-active' : 'side-icon'}`} size={18} />
                       {item.name}
                     </div>
                   </Link>
@@ -276,29 +273,26 @@ const toggleSection = (title: string) => {
               })}
             </div>
           ))}
-          
+
           {/* Admin Section */}
           {isAdmin && (
             <>
               <div className="pt-4 pb-2">
-                <div className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <div className="side-section px-3 text-xs font-semibold uppercase tracking-wider">
                   Administración
                 </div>
               </div>
               {adminNavigation.map((item) => {
                 const isActive = location === item.href;
                 const Icon = item.icon;
-                
+
                 return (
                   <Link key={item.name} href={item.href}>
                     <div className={`
                       flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors
-                      ${isActive 
-                        ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 border-r-2 border-blue-600' 
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                      }
+                      ${isActive ? 'side-item-active' : 'side-item'}
                     `}>
-                      <Icon className={`mr-3 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} size={18} />
+                      <Icon className={`mr-3 ${isActive ? 'side-icon-active' : 'side-icon'}`} size={18} />
                       {item.name}
                     </div>
                   </Link>
@@ -309,14 +303,14 @@ const toggleSection = (title: string) => {
         </nav>
 
         {/* Help Button */}
-        <div className="p-3 border-t border-slate-800">
+        <div className="p-3 border-t side-border">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={startTour}
-                className="w-full justify-start text-slate-400 hover:text-white hover:bg-slate-900"
+                className="side-item w-full justify-start"
               >
                 <HelpCircle className="mr-2" size={16} />
                 <span className="text-sm">Ayuda y Tutorial</span>
@@ -329,7 +323,7 @@ const toggleSection = (title: string) => {
         </div>
 
         {/* User Profile */}
-        <div className="p-3 border-t border-slate-800">
+        <div className="p-3 border-t side-border">
           <UserProfile />
         </div>
       </div>
@@ -346,7 +340,7 @@ function UserProfile() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center space-x-3 p-2 rounded-xl bg-slate-900/80 border border-slate-800">
+      <div className="flex items-center space-x-3 p-2 rounded-xl side-card border">
         <div className="w-8 h-8 bg-slate-200 rounded-full animate-pulse"></div>
         <div className="flex-1 min-w-0">
           <div className="h-4 bg-slate-200 rounded animate-pulse mb-1"></div>
@@ -359,12 +353,12 @@ function UserProfile() {
   if (!isAuthenticated || !user) {
     return (
       <div className="space-y-2">
-        <div className="text-center text-sm text-slate-600 mb-3">
+        <div className="text-center text-sm side-tagline mb-3">
           Inicia sesión para acceder a todas las funciones
         </div>
         <Button
           onClick={() => window.location.href = '/api/login'}
-          className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
           data-testid="login-button"
         >
           <User className="mr-2" size={16} />
@@ -374,20 +368,20 @@ function UserProfile() {
     );
   }
 
-  const displayName = user.firstName && user.lastName 
-    ? `${user.firstName} ${user.lastName}` 
+  const displayName = user.firstName && user.lastName
+    ? `${user.firstName} ${user.lastName}`
     : user.email?.split('@')[0] || 'Usuario';
-  
+
   const userRole = user.roles?.[0]?.role?.displayName || 'Usuario';
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center space-x-3 p-2 rounded-xl bg-slate-900 border border-slate-800">
-        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+      <div className="flex items-center space-x-3 p-2 rounded-xl side-card border">
+        <div className="w-8 h-8 side-logo rounded-full flex items-center justify-center">
           {user.profileImageUrl ? (
-            <img 
-              src={user.profileImageUrl} 
-              alt="Profile" 
+            <img
+              src={user.profileImageUrl}
+              alt="Profile"
               className="w-8 h-8 rounded-full"
             />
           ) : (
@@ -395,11 +389,11 @@ function UserProfile() {
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-white truncate">{displayName}</p>
-          <p className="text-xs text-slate-400 truncate">{userRole}</p>
+          <p className="text-sm font-medium side-title truncate">{displayName}</p>
+          <p className="text-xs side-tagline truncate">{userRole}</p>
         </div>
       </div>
-      
+
       <Button
         onClick={async () => {
           await fetch("/api/auth/logout", {
@@ -411,7 +405,7 @@ function UserProfile() {
         }}
         variant="ghost"
         size="sm"
-        className="w-full justify-start text-slate-400 hover:text-white hover:bg-slate-900"
+        className="side-item w-full justify-start"
         data-testid="logout-button"
       >
         <User className="mr-2" size={16} />
