@@ -170,7 +170,7 @@
     @apply bg-red-100 border-2 border-red-300 hover:bg-red-200;
   }
 }
-/* ===== SCROLLBAR GLOBAL AZUL ===== */
+/* ===== SCROLLBARS (siguen la paleta) ===== */
 
 /* Chrome, Edge, Safari */
 ::-webkit-scrollbar {
@@ -178,23 +178,23 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9; /* slate-100 */
+  background: var(--muted);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2563eb; /* blue-600 */
+  background: var(--primary);
   border-radius: 6px;
   transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #1d4ed8; /* blue-700 */
+  background: var(--ring);
 }
 
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #2563eb #f1f5f9;
+  scrollbar-color: var(--primary) var(--muted);
 }
 
 /* ===== SCROLL PERSONALIZADO PARA CONTENEDORES ===== */
@@ -204,42 +204,141 @@
 }
 
 .custom-scroll::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: var(--muted);
 }
 
 .custom-scroll::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+  background: var(--primary);
   border-radius: 6px;
 }
 
 .custom-scroll::-webkit-scrollbar-thumb:hover {
-  background: #1d4ed8;
+  background: var(--ring);
 }
 
 /* Firefox */
 .custom-scroll {
   scrollbar-width: thin;
-  scrollbar-color: #2563eb #f1f5f9;
+  scrollbar-color: var(--primary) var(--muted);
 }
 
+/* Scroll de la barra lateral (usa los tokens de la sidebar) */
 .sidebar-scroll::-webkit-scrollbar {
   width: 6px;
 }
 
 .sidebar-scroll::-webkit-scrollbar-track {
-  background: #020617;
+  background: var(--sidebar-background);
 }
 
 .sidebar-scroll::-webkit-scrollbar-thumb {
-  background: #2563eb;
+  background: var(--sidebar-muted);
   border-radius: 999px;
 }
 
 .sidebar-scroll::-webkit-scrollbar-thumb:hover {
-  background: #1d4ed8;
+  background: var(--sidebar-primary);
 }
 
 .sidebar-scroll {
   scrollbar-width: thin;
-  scrollbar-color: #2563eb #020617;
+  scrollbar-color: var(--sidebar-muted) var(--sidebar-background);
 }
+
+/* ===== PALETAS OSCURAS ===== */
+:root[data-theme="midnight"] {
+  --background: hsl(222, 47%, 11%);
+  --foreground: hsl(210, 20%, 92%);
+  --muted: hsl(222, 30%, 18%);
+  --muted-foreground: hsl(215, 16%, 65%);
+  --popover: hsl(222, 45%, 13%);
+  --popover-foreground: hsl(210, 20%, 92%);
+  --card: hsl(222, 42%, 14%);
+  --card-foreground: hsl(210, 20%, 92%);
+  --border: hsl(222, 25%, 24%);
+  --input: hsl(222, 25%, 24%);
+  --primary: hsl(217, 91%, 60%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(222, 30%, 20%);
+  --secondary-foreground: hsl(210, 20%, 92%);
+  --accent: hsl(190, 85%, 55%);
+  --accent-foreground: hsl(222, 47%, 11%);
+  --ring: hsl(217, 91%, 60%);
+  --sidebar-background: hsl(222, 47%, 9%);
+  --sidebar-foreground: hsl(215, 18%, 70%);
+  --sidebar-strong: hsl(0, 0%, 100%);
+  --sidebar-muted: hsl(215, 15%, 45%);
+  --sidebar-border: hsl(222, 25%, 20%);
+  --sidebar-hover: hsl(222, 35%, 16%);
+  --sidebar-active-bg: hsl(217, 91%, 60%);
+  --sidebar-active-fg: hsl(0, 0%, 100%);
+  --sidebar-primary: hsl(217, 91%, 60%);
+}
+:root[data-theme="carbon"] {
+  --background: hsl(200, 24%, 10%);
+  --foreground: hsl(180, 15%, 90%);
+  --muted: hsl(200, 18%, 17%);
+  --muted-foreground: hsl(185, 12%, 62%);
+  --popover: hsl(200, 24%, 12%);
+  --popover-foreground: hsl(180, 15%, 90%);
+  --card: hsl(200, 22%, 13%);
+  --card-foreground: hsl(180, 15%, 90%);
+  --border: hsl(200, 18%, 22%);
+  --input: hsl(200, 18%, 22%);
+  --primary: hsl(173, 70%, 45%);
+  --primary-foreground: hsl(200, 30%, 8%);
+  --secondary: hsl(200, 18%, 18%);
+  --secondary-foreground: hsl(180, 15%, 90%);
+  --accent: hsl(190, 75%, 48%);
+  --accent-foreground: hsl(200, 30%, 8%);
+  --ring: hsl(173, 70%, 45%);
+  --sidebar-background: hsl(200, 26%, 8%);
+  --sidebar-foreground: hsl(185, 14%, 68%);
+  --sidebar-strong: hsl(0, 0%, 100%);
+  --sidebar-muted: hsl(185, 10%, 42%);
+  --sidebar-border: hsl(200, 18%, 18%);
+  --sidebar-hover: hsl(200, 22%, 14%);
+  --sidebar-active-bg: hsl(173, 70%, 40%);
+  --sidebar-active-fg: hsl(0, 0%, 100%);
+  --sidebar-primary: hsl(173, 70%, 45%);
+}
+:root[data-theme="graphite"] {
+  --background: hsl(250, 24%, 11%);
+  --foreground: hsl(250, 18%, 92%);
+  --muted: hsl(250, 18%, 19%);
+  --muted-foreground: hsl(250, 12%, 66%);
+  --popover: hsl(250, 24%, 13%);
+  --popover-foreground: hsl(250, 18%, 92%);
+  --card: hsl(250, 22%, 15%);
+  --card-foreground: hsl(250, 18%, 92%);
+  --border: hsl(250, 18%, 25%);
+  --input: hsl(250, 18%, 25%);
+  --primary: hsl(255, 82%, 68%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(250, 18%, 20%);
+  --secondary-foreground: hsl(250, 18%, 92%);
+  --accent: hsl(282, 70%, 65%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  --ring: hsl(255, 82%, 68%);
+  --sidebar-background: hsl(250, 26%, 9%);
+  --sidebar-foreground: hsl(250, 14%, 72%);
+  --sidebar-strong: hsl(0, 0%, 100%);
+  --sidebar-muted: hsl(250, 10%, 48%);
+  --sidebar-border: hsl(250, 18%, 20%);
+  --sidebar-hover: hsl(250, 22%, 16%);
+  --sidebar-active-bg: hsl(255, 82%, 66%);
+  --sidebar-active-fg: hsl(0, 0%, 100%);
+  --sidebar-primary: hsl(255, 82%, 68%);
+}
+
+/* Modo oscuro: remapea las utilidades de color fijas a tokens del tema,
+   para no tener que editar cada una de las pantallas. */
+.dark .bg-white { background-color: var(--card) !important; }
+.dark .bg-slate-50, .dark .bg-gray-50 { background-color: var(--background) !important; }
+.dark .bg-slate-100, .dark .bg-gray-100 { background-color: var(--muted) !important; }
+.dark .text-slate-900, .dark .text-slate-800, .dark .text-slate-700,
+.dark .text-gray-900, .dark .text-gray-800, .dark .text-gray-700 { color: var(--foreground) !important; }
+.dark .text-slate-600, .dark .text-slate-500, .dark .text-slate-400,
+.dark .text-gray-600, .dark .text-gray-500, .dark .text-gray-400 { color: var(--muted-foreground) !important; }
+.dark .border-slate-200, .dark .border-slate-100,
+.dark .border-gray-200, .dark .border-gray-100 { border-color: var(--border) !important; }

@@ -22,8 +22,11 @@ export interface CustomTheme {
 // añadirán a esta lista; el resto del sistema ya las soporta.
 export const APP_THEMES: AppThemePreset[] = [
   { id: "teal", name: "Teal logístico", kind: "light", swatches: ["#0d9488", "#059669", "#0891b2", "#edf5f3"] },
-  { id: "indigo", name: "Índigo moderno", kind: "light", swatches: ["#4f46e5", "#7c3aed", "#2563eb", "#eef2ff"] },
+  { id: "indigo", name: "Índigo moderno", kind: "light", swatches: ["#4f46e5", "#7c3aed", "#2563eb", "#ffffff"] },
   { id: "warm", name: "Cálido editorial", kind: "light", swatches: ["#ea580c", "#d97706", "#9a3412", "#f5f4f1"] },
+  { id: "midnight", name: "Midnight", kind: "dark", swatches: ["#3b82f6", "#22d3ee", "#1b263f", "#0d1526"] },
+  { id: "carbon", name: "Carbón teal", kind: "dark", swatches: ["#14b8a6", "#22d3ee", "#132530", "#0b1a20"] },
+  { id: "graphite", name: "Grafito violeta", kind: "dark", swatches: ["#7c6cf0", "#c084fc", "#1c1830", "#120f20"] },
 ];
 
 export const DEFAULT_THEME = "teal";
