@@ -22,7 +22,7 @@ export function Header() {
 
   return (
     <>
-      <header className="bg-white/80 backdrop-blur-xl shadow-sm border-b border-slate-200/70 px-4 md:px-6 py-3 md:py-4 sticky top-0 z-20">
+      <header className="bg-card backdrop-blur-xl shadow-sm border-b border-border px-4 md:px-6 py-3 md:py-4 sticky top-0 z-20">
         {/* Search Bar - takes most of the space */}
         <div className="flex-1 max-w-2xl">
           <SearchBar />

@@ -342,3 +342,13 @@
 .dark .text-gray-600, .dark .text-gray-500, .dark .text-gray-400 { color: var(--muted-foreground) !important; }
 .dark .border-slate-200, .dark .border-slate-100,
 .dark .border-gray-200, .dark .border-gray-100 { border-color: var(--border) !important; }
+/* Cabeceras/paneles translucidos: en oscuro usan el color de card */
+.dark .bg-white\/95,
+.dark .bg-white\/90,
+.dark .bg-white\/80,
+.dark .bg-white\/70,
+.dark .bg-white\/60,
+.dark .bg-white\/50 { background-color: var(--card) !important; }
+.dark .border-slate-200\/70,
+.dark .border-slate-200\/60,
+.dark .border-slate-200\/50 { border-color: var(--border) !important; }
